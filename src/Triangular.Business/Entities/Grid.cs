@@ -17,4 +17,3 @@ public class Grid
 
     public int GetColumnCount() => Width / CellSize;
 }
-

@@ -11,6 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IGridReferenceService, GridReferenceService>();
+builder.Services.AddScoped<ITriangleServiceFactory, TriangleServiceFactory>();
 builder.Services.AddScoped<ITriangleByGridReferenceService, TriangleByGridReferenceService>();
 
 var app = builder.Build();
