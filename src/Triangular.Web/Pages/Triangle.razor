@@ -1,0 +1,116 @@
+﻿@page "/triangle"
+
+@implements IDisposable
+@using System.Text
+@using System.Text.Json
+@using Triangular.Web.Models
+@using Triangular.Web.Interfaces
+@using Triangular.Web.Services
+@using Triangular.Web.StateService
+@inject StateGridService StateGridService
+@inject ITriangleClient<TriangleReference, GridTriangle> triangleClient
+
+<div>
+    <div class="row">
+        <div class="col-6">
+            <div class="grid">
+                <h2>Define Grid</h2>
+                <form>
+                    <div class="form-group">
+                        <label for="gridHeight">Grid Height:</label>
+                        <input type="number" class="form-control" id="gridHeight" placeholder="Enter grid height" min="10" max="100" @bind="height">
+                        <p class="text-muted">Must be between 10 &amp; 100</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="gridWidth">Grid Width:</label>
+                        <input type="number" class="form-control" id="gridWidth" placeholder="Enter grid width" min="10" max="100" @bind="width">
+                        <p class="text-muted">Must be between 10 &amp; 100</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="gridWidth">Cell Size:</label>
+                        <input type="number" class="form-control" id="cellSize" placeholder="Enter cell size" min="10" max="100" @bind="cellSize">
+                        <p class="text-muted">Must be between 10 &amp; 100</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="coordinateX">Triangle Coordinate X:</label>
+                        <input type="text" class="form-control" id="coordinateX" placeholder="Enter coordinate x,y" @bind="coordinateX">
+                    </div>
+                    <div class="form-group">
+                        <label for="coordinateY">Triangle Coordinate Y:</label>
+                        <input type="text" class="form-control" id="coordinateY" placeholder="Enter coordinate x,y" @bind="coordinateY">
+                    </div>
+                    <div class="form-group">
+                        <label for="coordinateZ">Triangle Coordinate Z:</label>
+                        <input type="text" class="form-control" id="coordinateZ" placeholder="Enter coordinate x,y" @bind="coordinateZ">
+                    </div>
+
+                    <button type="button" class="btn btn-secondary" @onclick="GetTriangle">Get</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-6">
+            @if (isLoading)
+            {
+                <div>
+                    <p>Fetching</p>
+                </div>
+            }
+            else
+            {
+                if (triangleReference is not null)
+                {
+                    <div>
+                        <h2>Triangle</h2>
+                        <ul>
+                            <li>@($"{triangleReference.column}{triangleReference.row}")</li>
+                        </ul>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int height = 60;
+    private int width = 60;
+    private int cellSize = 10;
+    private string coordinateX = string.Empty;
+    private string coordinateY = string.Empty;
+    private string coordinateZ = string.Empty;
+    private bool isLoading = true;
+    private TriangleReference triangleReference = new();
+
+    protected override void OnInitialized()
+    {
+        StateGridService.OnChange += StateHasChanged;
+    }
+
+    private void CreateGrid()
+    {
+        StateGridService.Grid = new(height, width, cellSize);
+    }
+
+    public void Dispose()
+    {
+        StateGridService.OnChange -= StateHasChanged;
+    }
+
+    private async Task GetTriangle()
+    {
+        isLoading = true;
+
+        var triangleX = coordinateX.Split(',');
+        var triangleY = coordinateY.Split(',');
+        var triangleZ = coordinateZ.Split(',');
+
+        if (triangleX.Length == 2 && triangleY.Length == 2 && triangleZ.Length == 2)
+        {
+            GridTriangle gridTriangle = new(height, width, cellSize, triangleX, triangleY, triangleZ);
+
+            triangleReference = await triangleClient.GetPost(gridTriangle, "Triangle", "api/GridReference") ?? new();
+
+            isLoading = false;
+        }
+    }
+}

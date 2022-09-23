@@ -1,0 +1,174 @@
+﻿@page "/grid"
+
+@implements IDisposable
+@using System.Text
+@using System.Text.Json
+@using Triangular.Web.Models
+@using Triangular.Web.Interfaces
+@using Triangular.Web.Services
+@using Triangular.Web.StateService
+@inject StateGridService StateGridService
+@inject ITriangleClient<GridShape, GridReferenceGrid> triangleClient
+
+<HeadContent>
+    <style>
+        h2 {
+            border-bottom: 1px solid #000000;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+        }
+
+        .leftTriangle {
+            fill: yellow;
+        }
+
+        .rightTriangle {
+            fill: violet;
+        }
+
+        .active {
+            fill: green;
+        }
+
+        .leftTriangle:hover {
+            fill: blue;
+        }
+
+        .rightTriangle:hover {
+            fill: red;
+        }
+    </style>
+</HeadContent>
+
+<h3>Grid</h3>
+
+<div>
+    <div class="row">
+        <div class="col-6">
+            @if (StateGridService.Grid.IsGridVisable())
+            {
+                    <div class="grid">
+                        <h2>Select a Triangle</h2>
+                        <svg class="board" style="width: @(StateGridService.Grid.Width * scale)px; height: @(StateGridService.Grid.Height * scale)px; cursor: pointer;">
+                        @for (int i = 1; i <= StateGridService.Grid.GetRowCount(); i++)
+                        {
+                            @for (int j = 1; j <= StateGridService.Grid.GetColumnCount(); j++)
+                            {
+                                int row = i;
+                                int column = j;
+                                leftGridReference = new(row, column * 2 - 1);
+                                rightGridReference = new(row, column * 2);
+
+                                            <polygon class="leftTriangle @(selectedGridReference.GetReference().Equals(leftGridReference.GetReference()) ? "active" : "")"
+                             points="@GetPoints(row, column, "left")"
+                             @onclick="@(() => GetTriangleCoordinates(row, column * 2 - 1))"
+                             @onclick:stopPropagation="stopPropagation">
+                                                <title>@leftGridReference.GetReference()</title>
+                                            </polygon>
+                                            <polygon class="rightTriangle @(selectedGridReference.GetReference().Equals(rightGridReference.GetReference()) ? "active" : "")"
+                             points="@GetPoints(row, column, "right")"
+                             @onclick="@(() => GetTriangleCoordinates(row, column * 2))"
+                             @onclick:stopPropagation="stopPropagation">
+                                                <title>@rightGridReference.GetReference()</title>
+                                            </polygon>
+                            }
+                        }
+                        </svg>
+                        <hr />
+                        <small>@StateGridService.Grid.Width x @StateGridService.Grid.Height grid, @StateGridService.Grid.GetRowCount() rows x @StateGridService.Grid.GetColumnCount() columns</small>
+                    </div>
+            }
+            else
+            {
+                    <div class="alert alert-warning">
+                        <strong>Unable to display grid</strong>
+
+                        Please ensure your cell size is divisible by the height and width of the grid.
+                    </div>
+            }
+        </div>
+        <div class="col-6">
+            @if (isLoading)
+            {
+                    <div>
+                        <p>Fetching coordinates for @selectedGridReference.GetReference()</p>
+                    </div>
+            }
+            else
+            {
+                if (gridShape is not null)
+                {
+                    if (gridShape.coordinates.Count > 0)
+                    {
+                                    <div>
+                                        <h2>Coordinates for @selectedGridReference.GetReference()</h2>
+
+                                        <ul>
+
+                                @foreach (var coordinate in gridShape.coordinates)
+                                {
+                                                        <li>X: @coordinate.coordinateX, Y: @coordinate.coordinateY</li>
+                                }
+
+                                        </ul>
+                                    </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool stopPropagation = true;
+    private GridReference leftGridReference = new();
+    private GridReference rightGridReference = new();
+    private GridReference selectedGridReference = new();
+    private bool isLoading = false;
+    private int scale = 5;
+    private GridShape gridShape = new();
+
+    protected override void OnInitialized()
+    {
+        StateGridService.OnChange += StateHasChanged;
+    }
+
+    private void CreateGrid()
+    {
+        StateGridService.Grid = new(60, 60, 10);
+    }
+
+    public void Dispose()
+    {
+        StateGridService.OnChange -= StateHasChanged;
+    }
+
+    private string GetPoints(int row, int column, string typeTriangle)
+    {
+        StringBuilder points = new();
+
+        int point1X = (column - 1) * StateGridService.Grid.CellSize;
+        int point1Y = (row - 1) * StateGridService.Grid.CellSize;
+
+        int point2X = (typeTriangle.Equals("left") ? (column - 1) : column) * StateGridService.Grid.CellSize;
+        int point2Y = (typeTriangle.Equals("right") ? (row - 1) : row) * StateGridService.Grid.CellSize;
+
+        int point3X = column * StateGridService.Grid.CellSize;
+        int point3Y = row * StateGridService.Grid.CellSize;
+
+        points.Append(typeTriangle.Equals("left") ? $"{point1X * scale}, {point1Y * scale} {point2X * scale}, {point2Y * scale} {point3X * scale}, {point3Y * scale}" : $"{point1X * scale}, {point1Y * scale} {point2X * scale}, {point2Y * scale} {point3X * scale}, {point3Y * scale}");
+
+        return points.ToString();
+    }
+
+    private async Task GetTriangleCoordinates(int row, int column)
+    {
+        selectedGridReference = new(row, column);
+        GridReferenceGrid gridReferenceGrid = new(selectedGridReference.Column, selectedGridReference.Row, StateGridService.Grid.Height, StateGridService.Grid.Width, StateGridService.Grid.CellSize);
+        isLoading = true;
+
+        gridShape = await triangleClient.GetPost(gridReferenceGrid, "Triangle", "api/TriangleByGridReference") ?? new();
+
+        isLoading = false;
+    }
+}

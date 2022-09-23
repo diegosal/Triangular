@@ -1,4 +1,4 @@
-﻿namespace Triangular.Api.Models;
+﻿namespace Triangular.Web.Models;
 
 public class GridReferenceGrid
 {

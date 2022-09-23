@@ -18,6 +18,5 @@ public class GridReference
 
     public int GetNumericRow() => (int)Row - 64;
 
-
     public char NumberToAlphabet(int number) => (Char)(64 + number);
 }

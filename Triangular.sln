@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Triangular.Business", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Triangular.Console", "src\Triangular.Console\Triangular.Console.csproj", "{3068B91E-517F-44C8-8610-98854E5BBBED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Triangular.Web", "src\Triangular.Web\Triangular.Web.csproj", "{D768B706-311E-4F7B-97F4-D470523773D6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Triangular.Web", "src\Triangular.Web\Triangular.Web.csproj", "{D768B706-311E-4F7B-97F4-D470523773D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Triangular.Api", "src\Triangular.Api\Triangular.Api.csproj", "{B57A5A3A-92BC-4BA0-A3D4-9D321A7D08CF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Triangular.Api", "src\Triangular.Api\Triangular.Api.csproj", "{B57A5A3A-92BC-4BA0-A3D4-9D321A7D08CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
